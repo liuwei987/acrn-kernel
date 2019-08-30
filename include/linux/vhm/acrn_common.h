@@ -58,7 +58,7 @@
 #include <stdint.h>
 #endif
 
-#include <linux/atomic.h>
+#include <linux/refcount.h>
 
 /*
  * Common structures for ACRN/VHM/DM
@@ -230,7 +230,7 @@ struct vhm_request {
 	 *
 	 * Take REQ_STATE_xxx as values. Byte offset: 136.
 	 */
-	atomic_t processed;
+	refcount_t processed;
 } __attribute__((aligned(256)));
 
 struct vhm_request_buffer {

@@ -88,7 +88,7 @@ struct acrn_hvlog {
 	struct miscdevice miscdev;
 	char name[24];
 	shared_buf_t *sbuf;
-	atomic_t open_cnt;
+	refcount_t open_cnt;
 	int pcpu_num;
 };
 
@@ -154,7 +154,7 @@ static int acrn_hvlog_open(struct inode *inode, struct file *filp)
 	}
 
 	/* More than one reader at the same time could get data messed up */
-	if (atomic_cmpxchg(&acrn_hvlog->open_cnt, 0, 1) != 0)
+	if (refcount_add_not_zero(1, &acrn_hvlog->open_cnt) != 0)
 		return -EBUSY;
 
 	filp->private_data = acrn_hvlog;
@@ -176,7 +176,7 @@ static int acrn_hvlog_release(struct inode *inode, struct file *filp)
 		return -EIO;
 	}
 
-	atomic_dec(&acrn_hvlog->open_cnt);
+	refcount_dec(&acrn_hvlog->open_cnt);
 	filp->private_data = NULL;
 
 	return 0;
